@@ -1,3 +1,5 @@
+Forked from [AaryaRai01/Inventory-Management-System](https://github.com/AaryaRai01/Inventory-Management-System) (MIT License), extended for CSEB5233 Designing Applications on Cloud project.
+
 # Inventory Dashboard: A Full-Stack Management System
 
 <p align="center">
