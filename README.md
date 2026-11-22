@@ -2,7 +2,7 @@
 
 A cloud-deployed inventory dashboard for managing products and stock levels, built for the **CSEB5233 Designing Applications on Cloud** project.
 
-🔗 **Live app:** https://inventory-management-system-sage-kappa.vercel.app
+🔗 **Live app:** https://inventory-management-system-cloudclass.vercel.app
 
 <p align="center">
   <img src="https://img.shields.io/badge/Next.js-14.x-black?style=for-the-badge&logo=nextdotjs" alt="Next.js">
