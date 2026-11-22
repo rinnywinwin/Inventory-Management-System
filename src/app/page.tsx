@@ -18,9 +18,11 @@ const BoxIcon = () => (
 export default function Home() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   const fetchProducts = useCallback(async () => {
     setLoading(true);
+    setError('');
     try {
       const response = await fetch('/api/products');
       if (!response.ok) throw new Error('Network response was not ok');
@@ -28,6 +30,7 @@ export default function Home() {
       setProducts(data);
     } catch (error) {
       console.error('Failed to fetch products:', error);
+      setError('Unable to load inventory. Check your connection and Supabase setup.');
     } finally {
       setLoading(false);
     }
@@ -58,6 +61,7 @@ export default function Home() {
 
         {/* Products List Section */}
         <section>
+          {error && <p role="alert" className="text-red-300 mb-4">{error} <button onClick={fetchProducts} className="underline">Retry</button></p>}
           {loading ? (
             <div className="text-center text-slate-400 py-10">Loading products...</div>
           ) : (

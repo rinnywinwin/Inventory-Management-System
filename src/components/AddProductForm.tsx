@@ -3,6 +3,7 @@
 
 import { useState, FormEvent } from 'react';
 import { Product } from '@/types';
+import { uploadProductImage } from '@/lib/productImages';
 
 type AddProductFormProps = {
   onProductAdded: () => void;
@@ -14,6 +15,8 @@ export default function AddProductForm({ onProductAdded }: AddProductFormProps) 
   const [price, setPrice] = useState('');
   const [quantity, setQuantity] = useState('');
   const [category, setCategory] = useState('');
+  const [image, setImage] = useState<File | null>(null);
+  const [uploadedUrl, setUploadedUrl] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: FormEvent) => {
@@ -21,13 +24,17 @@ export default function AddProductForm({ onProductAdded }: AddProductFormProps) 
     setIsSubmitting(true);
     const newProduct: Omit<Product, 'id' | 'created_at'> = { name, price: parseFloat(price), quantity: parseInt(quantity, 10), category };
     try {
+      const image_url = uploadedUrl || (image ? await uploadProductImage(image) : null);
+      setUploadedUrl(image_url);
+      newProduct.image_url = image_url;
       const response = await fetch('/api/products', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(newProduct) });
-      if (!response.ok) throw new Error('Failed to add product');
+      if (!response.ok) throw new Error((await response.json()).error || 'Failed to add product');
       setName(''); setPrice(''); setQuantity(''); setCategory('');
+      setImage(null); setUploadedUrl(null);
       setIsOpen(false);
       onProductAdded();
     } catch (error) {
-      console.error(error); alert('Error adding product.');
+      alert(error instanceof Error ? error.message : 'Error adding product.');
     } finally {
       setIsSubmitting(false);
     }
@@ -54,7 +61,7 @@ export default function AddProductForm({ onProductAdded }: AddProductFormProps) 
               <input id="name" type="text" placeholder="e.g. iPhone 16" value={name} onChange={(e) => setName(e.target.value)} className="w-full bg-slate-700 p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 transition" required />
             </div>
             <div>
-              <label htmlFor="price" className="text-sm font-medium text-slate-400 mb-1 block">Price ($)</label>
+              <label htmlFor="price" className="text-sm font-medium text-slate-400 mb-1 block">Price (RM)</label>
               <input id="price" type="number" placeholder="e.g. 999.99" value={price} onChange={(e) => setPrice(e.target.value)} className="w-full bg-slate-700 p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 transition" required min="0" step="0.01" />
             </div>
             <div>
@@ -66,7 +73,7 @@ export default function AddProductForm({ onProductAdded }: AddProductFormProps) 
               <input id="category" type="text" placeholder="e.g. Electronics" value={category} onChange={(e) => setCategory(e.target.value)} className="w-full bg-slate-700 p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 transition" />
             </div>
             
-            {/* Submit Button */}
+<div className="sm:col-span-2"><label htmlFor="product-image" className="block mb-1 text-sm text-slate-400">Product image (JPEG, PNG, WebP; max 5 MB)</label><input id="product-image" type="file" accept="image/jpeg,image/png,image/webp" disabled={isSubmitting} onChange={e => { setImage(e.target.files?.[0] || null); setUploadedUrl(null); }} /></div>
             <div className="sm:col-span-2 flex justify-end">
               <button type="submit" disabled={isSubmitting} className="w-full sm:w-auto bg-sky-600 hover:bg-sky-700 text-white font-bold py-2 px-6 rounded-md transition duration-300 disabled:bg-slate-500">
                 {isSubmitting ? 'Saving...' : 'Save Product'}

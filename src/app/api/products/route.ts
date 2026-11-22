@@ -1,6 +1,9 @@
 // src/app/api/products/route.ts
 import { supabase } from '@/lib/supabaseClient';
 import { NextRequest, NextResponse } from 'next/server';
+import { validateProduct } from '@/lib/validateProduct';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET() {
   const { data, error } = await supabase
@@ -15,7 +18,9 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  const product = await req.json();
+  let product;
+  try { product = validateProduct(await req.json(), true); }
+  catch (e) { return NextResponse.json({ error: e instanceof Error ? e.message : 'Invalid product' }, { status: 400 }); }
   const { data, error } = await supabase
     .from('products')
     .insert([product])

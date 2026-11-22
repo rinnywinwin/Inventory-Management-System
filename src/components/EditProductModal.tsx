@@ -3,6 +3,7 @@
 
 import { useState, FormEvent, useEffect } from 'react';
 import { Product } from '@/types';
+import { uploadProductImage } from '@/lib/productImages';
 
 type EditProductModalProps = {
   product: Product;
@@ -12,6 +13,8 @@ type EditProductModalProps = {
 
 export default function EditProductModal({ product, onClose, onProductUpdated }: EditProductModalProps) {
   const [formData, setFormData] = useState<Product>(product);
+  const [image, setImage] = useState<File | null>(null);
+  const [uploadedUrl, setUploadedUrl] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -30,23 +33,24 @@ export default function EditProductModal({ product, onClose, onProductUpdated }:
     const updatedProduct = {
       name: formData.name,
       price: parseFloat(String(formData.price)),
-      quantity: parseInt(String(formData.quantity), 10),
+      image_url: formData.image_url || null,
       category: formData.category,
     };
 
     try {
+      if (image) { updatedProduct.image_url = uploadedUrl || await uploadProductImage(image); setUploadedUrl(updatedProduct.image_url); }
       const response = await fetch(`/api/products/${product.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updatedProduct),
       });
 
-      if (!response.ok) throw new Error('Failed to update product');
+      if (!response.ok) throw new Error((await response.json()).error || 'Failed to update product');
       onProductUpdated();
 
     } catch (error) {
       console.error(error);
-      alert('Error updating product.');
+      alert(error instanceof Error ? error.message : 'Error updating product.');
     } finally {
       setIsSubmitting(false);
     }
@@ -63,13 +67,10 @@ export default function EditProductModal({ product, onClose, onProductUpdated }:
               <input id="edit-name" name="name" value={formData.name} onChange={handleChange} className="w-full bg-slate-700 text-white p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 transition" required />
             </div>
             <div>
-              <label htmlFor="edit-price" className="text-sm font-medium text-slate-400 mb-1 block">Price</label>
-              <input id="edit-price" name="price" type="number" value={formData.price} onChange={handleChange} className="w-full bg-slate-700 text-white p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 transition" required />
+              <label htmlFor="edit-price" className="text-sm font-medium text-slate-400 mb-1 block">Price (RM)</label>
+              <input id="edit-price" name="price" type="number" min="0" step="0.01" value={formData.price} onChange={handleChange} className="w-full bg-slate-700 text-white p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 transition" required />
             </div>
-            <div>
-              <label htmlFor="edit-quantity" className="text-sm font-medium text-slate-400 mb-1 block">Quantity</label>
-              <input id="edit-quantity" name="quantity" type="number" value={formData.quantity} onChange={handleChange} className="w-full bg-slate-700 text-white p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 transition" required />
-            </div>
+
             <div>
               <label htmlFor="edit-category" className="text-sm font-medium text-slate-400 mb-1 block">Category</label>
               <input id="edit-category" name="category" value={formData.category} onChange={handleChange} className="w-full bg-slate-700 text-white p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 transition" />
